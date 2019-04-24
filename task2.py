@@ -1,8 +1,13 @@
+import json
+
 import xlrd
 import urllib.parse
 import xmltodict
 from urllib.request import Request, urlopen
+from pymongo import MongoClient
 
+
+# import dnspython3
 
 def read_xlsx(path):
     wb = xlrd.open_workbook(path)
@@ -58,6 +63,11 @@ def get_results(obj):
     return xmltodict.parse(_res)
 
 
+# dsv-task2
+# eta
+# dsa@2019
+# terrybaz@tmails.net
+
 if __name__ == '__main__':
 
     loc = ("./data_in/Test 2 - DHL Shipments Report.xlsx")
@@ -65,17 +75,48 @@ if __name__ == '__main__':
     sheet = read_xlsx(loc)
 
     # sheet.cell_value(0, 0)
+    # client = MongoClient('mongodb+srv://%s:%s@cluster0-w4atg.mongodb.net/test?retryWrites=true',("terry","dsa2019"))
+    client = MongoClient('mongodb+srv://terry:dsa2019@cluster0-w4atg.mongodb.net/test?retryWrites=true')
+    db = client['dsv-task2']
+
+    etas = db.tt
+
+    _list_etas = []
 
     for i in range(1, sheet.nrows):
         print(sheet.row_values(i))
         _obj = build_obj(sheet.row_values(i))
         res = get_results(_obj)
-        if int(res['quotationResponse']['count']) == 0:
+
+        _count = int(res['quotationResponse']['count'])
+        if _count == 0:
             print('***********************')
+            _obj["ETA OK?"] = "NO"
+            _obj["ETA"] = res['quotationResponse']['errorMessage']
+        elif _count == 1:
+            _obj["ETA OK?"] = "YES"
+            _obj["ETA"] = res['quotationResponse']['quotationList']['quotation']['estDeliv']
+        else:
+            for k in range(0, _count):
+                _obj["ETA " + str(k) + " OK?"] = "YES"
+                _obj["ETA " + str(k)] = res['quotationResponse']['quotationList']['quotation'][k]['estDeliv']
+
+        _obj["DHL Response"] = res
+
+        # _obj["ETA"] =
+        # print(res['quotationResponse']['quotationList'][0]['quotation']['estDeliv'])
         print(res['quotationResponse']['count'])
+
+        result = etas.insert_one(_obj)
+        print('inserted id : {0}'.format(result.inserted_id))
+
+        _list_etas.append(_obj)
+
         # break
+
+    file_output = open("./data_out/task2_ETAs.json", "w", encoding='utf-8-sig')
+    json.dump(_list_etas, file_output, ensure_ascii=False)
+
     # ETA
-    # ETA
-    # OK?
 
     # print(sheet.nrows)
