@@ -6,9 +6,6 @@ import xmltodict
 from urllib.request import Request, urlopen
 from pymongo import MongoClient
 
-
-# import dnspython3
-
 def read_xlsx(path):
     wb = xlrd.open_workbook(path)
     return wb.sheet_by_index(0)
@@ -41,20 +38,9 @@ def build_obj(data):
     return _o
 
 
-# def build_get_params(o):
-#     print(o)
-#     _s = ""
-#     for key in o:
-#         _s = _s + "&" + key + "=" + str(o[key])
-#     return _s
-
-
 def get_results(obj):
-    # _params = build_get_params(obj)
     _params = urllib.parse.urlencode(obj)
     _url = "http://dct.dhl.com/data/quotation/?dtbl=N&w0=0&l0=0&h0=0&dimUom=cm&" + _params
-
-    # _url = u''.join(_url).encode('utf-8').strip()
 
     print(_url)
     req = Request(_url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -64,7 +50,7 @@ def get_results(obj):
 
 
 # dsv-task2
-# eta
+# etas
 # dsa@2019
 # terrybaz@tmails.net
 
@@ -74,12 +60,10 @@ if __name__ == '__main__':
 
     sheet = read_xlsx(loc)
 
-    # sheet.cell_value(0, 0)
-    # client = MongoClient('mongodb+srv://%s:%s@cluster0-w4atg.mongodb.net/test?retryWrites=true',("terry","dsa2019"))
     client = MongoClient('mongodb+srv://terry:dsa2019@cluster0-w4atg.mongodb.net/test?retryWrites=true')
     db = client['dsv-task2']
 
-    etas = db.tt
+    etas = db.etas
 
     _list_etas = []
 
@@ -103,20 +87,12 @@ if __name__ == '__main__':
 
         _obj["DHL Response"] = res
 
-        # _obj["ETA"] =
-        # print(res['quotationResponse']['quotationList'][0]['quotation']['estDeliv'])
         print(res['quotationResponse']['count'])
+
+        _list_etas.append(_obj.copy())
 
         result = etas.insert_one(_obj)
         print('inserted id : {0}'.format(result.inserted_id))
 
-        _list_etas.append(_obj)
-
-        # break
-
     file_output = open("./data_out/task2_ETAs.json", "w", encoding='utf-8-sig')
     json.dump(_list_etas, file_output, ensure_ascii=False)
-
-    # ETA
-
-    # print(sheet.nrows)
